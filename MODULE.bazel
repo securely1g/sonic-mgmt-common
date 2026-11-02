@@ -41,14 +41,19 @@ go_sdk.download(version = "1.25.9")
 
 go_deps = use_extension("@gazelle//:extensions.bzl", "go_deps")
 go_deps.from_file(go_mod = "//:go.mod")
-go_deps.gazelle_override(
+
+# Shared Go module overrides belong to the consuming root. When this repository
+# is the root, apply the same owner patches; downstream roots select these
+# exported patches explicitly without creating a second Go dependency graph.
+go_patches = use_extension("@gazelle//:extensions.bzl", "go_deps", dev_dependency = True)
+go_patches.gazelle_override(
     directives = ["gazelle:proto disable_global"],
     path = "github.com/openconfig/gnmi",
 )
 
 # These are the existing Make/vendor patches, applied to isolated dependency
 # repositories. Build actions never modify go.mod, vendor, or the checkout.
-go_deps.module_override(
+go_patches.module_override(
     patch_strip = 1,
     patches = [
         "//patches:ygot/ygot.patch",
@@ -56,31 +61,35 @@ go_deps.module_override(
     ],
     path = "github.com/openconfig/ygot",
 )
-go_deps.module_override(
+go_patches.module_override(
     patch_strip = 1,
-    patches = ["//patches:goyang/goyang.patch"],
+    patches = [
+        "//patches:goyang/goyang.patch",
+        "//patches:0002-goyang-preserve-declared-schema-order.patch",
+    ],
     path = "github.com/openconfig/goyang",
 )
-go_deps.module_override(
+go_patches.module_override(
     patch_strip = 1,
     patches = ["//patches:jsonquery.patch"],
     path = "github.com/antchfx/jsonquery",
 )
-go_deps.module_override(
+go_patches.module_override(
     patch_strip = 1,
     patches = ["//patches:xmlquery.patch"],
     path = "github.com/antchfx/xmlquery",
 )
-go_deps.module_override(
+go_patches.module_override(
     patch_strip = 1,
     patches = ["//patches:xpath.patch"],
     path = "github.com/antchfx/xpath",
 )
-go_deps.module_override(
+go_patches.module_override(
     patch_strip = 1,
     patches = ["//patches:glog.patch"],
     path = "github.com/golang/glog",
 )
+
 use_repo(go_deps, "af_inet_netaddr", "com_github_antchfx_jsonquery", "com_github_antchfx_xmlquery", "com_github_antchfx_xpath", "com_github_go_redis_redis_v7", "com_github_godbus_dbus_v5", "com_github_golang_glog", "com_github_google_go_cmp", "com_github_kylelemons_godebug", "com_github_maruel_natural", "com_github_openconfig_gnmi", "com_github_openconfig_goyang", "com_github_openconfig_ygot", "com_github_philopon_go_toposort", "com_github_pkg_profile", "com_github_redis_go_redis_v9", "com_github_workiva_go_datastructures", "org_golang_google_grpc", "org_golang_x_text")
 
 python = use_extension("@rules_python//python/extensions:python.bzl", "python")

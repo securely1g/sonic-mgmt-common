@@ -4,6 +4,21 @@ load("//tools/bazel:models.bzl", "codegen_tree", "cvl_schema", "model_docs", "ru
 
 package(default_visibility = ["//visibility:public"])
 
+py_test(
+    name = "bindings_repro_test",
+    srcs = ["bindings_repro_test.py"],
+    args = [
+        "$(location //tools/bazel:generate_ocbinds)",
+        "$(location @com_github_openconfig_ygot//generator)",
+        "$(location //models/yang:prepared_models)",
+    ],
+    data = [
+        "//models/yang:prepared_models",
+        "//tools/bazel:generate_ocbinds",
+        "@com_github_openconfig_ygot//generator",
+    ],
+)
+
 cvl_schema(
     name = "schema",
     models = "//models/yang:prepared_models",

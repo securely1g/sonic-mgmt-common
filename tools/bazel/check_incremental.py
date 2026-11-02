@@ -8,6 +8,7 @@ import shlex
 import shutil
 import subprocess
 import time
+import tempfile
 
 
 TARGETS = ["//dist:runtime", "//dist:codegen", "//translib", "//cvl",
@@ -56,7 +57,12 @@ def main():
     # Capture only the verified production configuration, before another
     # invocation can select the optional test-model output tree.
     for relative in OUTPUTS[:2]:
-        shutil.copy2(Path("bazel-bin") / relative, evidence / Path(relative).name)
+        # Bazel outputs are read-only. Publish a fresh evidence file atomically
+        # so reusing this evidence directory never rewrites a read-only copy.
+        with tempfile.NamedTemporaryFile(dir=evidence, delete=False) as temporary:
+            with (Path("bazel-bin") / relative).open("rb") as source_file:
+                shutil.copyfileobj(source_file, temporary)
+        os.replace(temporary.name, evidence / Path(relative).name)
     print(json.dumps(records, indent=2))
 
 

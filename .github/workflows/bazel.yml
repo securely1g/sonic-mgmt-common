@@ -60,23 +60,38 @@ jobs:
           BAZELISK_GITHUB_TOKEN: ""
         run: |
           $BAZEL_COMMAND test --local_test_jobs=2 \
-            --build_event_json_file=bazel-evidence/test-events.jsonl \
             //cvl:cvl_test //translib:translib_test //translib/db:db_test \
             //translib/cs:cs_test //translib/path:path_test \
             //translib/platform:platform_test //translib/internal/apis:apis_test \
             //translib/ocbinds:ocbinds_test //translib/transformer:transformer_test \
-            //dist:runtime_test //dist:codegen_contract_test //dist:schema_lint_test
+            //dist:runtime_test //dist:codegen_contract_test //dist:schema_lint_test //dist:bindings_repro_test
       - name: Run transformer tests with their declared test models
         id: transformer_tests
         env:
           BAZELISK_GITHUB_TOKEN: ""
         run: |
           $BAZEL_COMMAND test --config=xfmr \
-            --build_event_json_file=bazel-evidence/xfmr-test-events.jsonl \
             //translib/transformer:transformer_model_test
           # Keep production payloads as the published artifacts.
           $BAZEL_COMMAND build //dist:runtime //dist:codegen
           git -c safe.directory="$GITHUB_WORKSPACE" diff --exit-code
+      - name: Compile a separate consumer of the public owner targets
+        id: consumer
+        env:
+          BAZELISK_GITHUB_TOKEN: ""
+        run: |
+          cd tests/consumer
+          $BAZEL_COMMAND build --override_module="sonic-mgmt-common=$GITHUB_WORKSPACE" \
+            //:consumer @sonic_mgmt_common//dist:runtime \
+            2>&1 | tee "$GITHUB_WORKSPACE/bazel-evidence/consumer.log"
+          $BAZEL_COMMAND test --override_module="sonic-mgmt-common=$GITHUB_WORKSPACE" \
+            @sonic_mgmt_common//dist:runtime_test \
+            2>&1 | tee "$GITHUB_WORKSPACE/bazel-evidence/consumer-runtime-test.log"
+          runtime_path="$($BAZEL_COMMAND cquery --override_module="sonic-mgmt-common=$GITHUB_WORKSPACE" @sonic_mgmt_common//dist:runtime --output=files)"
+          cmp -- "$runtime_path" "$GITHUB_WORKSPACE/bazel-evidence/runtime.tar"
+          sha256sum "$runtime_path" > "$GITHUB_WORKSPACE/bazel-evidence/consumer-runtime.sha256"
+          sha256sum bazel-bin/consumer_/consumer > "$GITHUB_WORKSPACE/bazel-evidence/consumer.sha256"
+          cp MODULE.bazel.lock "$GITHUB_WORKSPACE/bazel-evidence/consumer-MODULE.bazel.lock"
       - name: Retain exact payloads and test evidence
         if: always()
         env:
@@ -84,6 +99,7 @@ jobs:
           CI_INCREMENTAL_RESULT: ${{ steps.incremental.outcome }}
           CI_DEFAULT_TEST_RESULT: ${{ steps.source_tests.outcome }}
           CI_XFMR_TEST_RESULT: ${{ steps.transformer_tests.outcome }}
+          CI_CONSUMER_RESULT: ${{ steps.consumer.outcome }}
         run: python3 tools/bazel/collect_evidence.py
       - name: Upload source and TAR evidence
         if: always()

@@ -30,7 +30,8 @@ bazel test //cvl:cvl_test //translib:translib_test //translib/db:db_test \
   //translib/cs:cs_test //translib/path:path_test //translib/platform:platform_test \
   //translib/internal/apis:apis_test //translib/ocbinds:ocbinds_test \
   //translib/transformer:transformer_test \
-  //dist:runtime_test //dist:codegen_contract_test //dist:schema_lint_test
+  //dist:runtime_test //dist:codegen_contract_test //dist:schema_lint_test \
+  //dist:bindings_repro_test
 bazel test --config=xfmr //translib/transformer:transformer_model_test
 ```
 
@@ -60,7 +61,7 @@ produce lint results and documentation. No action clones dependencies or
 mutates `vendor`, `go.mod`, or a generated source file in the checkout.
 
 Go inputs come from `go.mod`/`go.sum`, with the existing vendor patch set applied
-inside isolated external repositories. Bazel's shared Go dependency graph also
+inside external repositories in the shared Go dependency graph. Bazel's shared Go dependency graph also
 contains the rules_go tool dependencies; it selects `golang.org/x/text` 0.40.0
 over the source module's 0.39.0 minimum. Source `go.mod` is unchanged. The generated
 module resolution and test artifacts record the actual selected graph.
@@ -85,3 +86,26 @@ code-generation TAR and Go bindings change after the edit and return to their
 original SHA256 values after restoration. Source bytes are restored even when
 validation fails. `BAZEL_COMMAND` and `BAZEL_BUILD_FLAGS` accept local cache
 configuration; their use does not change the checked-in build contract.
+
+## Consuming the public Go libraries
+
+The consuming root selects Go 1.25.9, Python 3.13 and the same SONiC dependency
+patches. Gazelle deliberately permits dependency overrides only in the root
+module. This repository applies them through a development-only extension use
+when it is the root; a downstream root applies the exported patch labels to its
+single shared `go_deps` extension. See [the checked consumer module](tests/consumer/MODULE.bazel)
+and its [Go replacements](tests/consumer/go.mod). It compiles against the public
+CVL, translib and generated bindings without copying their source. In particular,
+retain the pinned glog replacement required by the existing glog patch.
+
+CI also builds this separate consumer workspace with `--override_module` pointing
+to the tested source checkout. Registry validation replaces that local override
+with the immutable source registration. The consumer-root configuration is not
+an isolated second copy of the owner's Go dependency graph.
+
+The inherited patched YANG generator used map iteration for ordered child lists,
+identity inheritance, and cross-module augments. The additional goyang patch keeps
+YANG declaration order and makes the unordered traversals stable. The binding
+reproducibility test runs the actual generator in two independent processes and
+compares all output bytes, so restoring an action-cache entry cannot mask a
+nondeterministic generator.

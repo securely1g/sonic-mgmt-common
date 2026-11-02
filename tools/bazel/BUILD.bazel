@@ -25,6 +25,7 @@ py_binary(
 py_binary(
     name = "generate_ocbinds",
     srcs = ["generate_ocbinds.py"],
+    visibility = ["//dist:__pkg__"],
 )
 
 py_binary(

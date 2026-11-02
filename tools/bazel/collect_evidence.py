@@ -46,6 +46,7 @@ def main():
             "production/testapp": os.environ.get("CI_DEFAULT_TEST_RESULT", "unknown"),
             "xfmrtest with test models": os.environ.get("CI_XFMR_TEST_RESULT", "unknown"),
         },
+        "external_consumer_result": os.environ.get("CI_CONSUMER_RESULT", "unknown"),
         "incremental_result": os.environ.get("CI_INCREMENTAL_RESULT", "unknown"),
         "artifacts": {p.name: hashlib.sha256(p.read_bytes()).hexdigest() for p in root.glob("*.tar")},
     }
