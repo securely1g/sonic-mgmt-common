@@ -32,6 +32,7 @@ go_deps.module_override(
     patches = [
         "@sonic_mgmt_common//patches:ygot/ygot.patch",
         "@sonic_mgmt_common//patches:0001-ygot-declare-patched-value-dependency.patch",
+        "@sonic_mgmt_common//patches:0003-ygot-preserve-union-enum-order.patch",
     ],
     path = "github.com/openconfig/ygot",
 )

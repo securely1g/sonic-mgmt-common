@@ -58,6 +58,7 @@ go_patches.module_override(
     patches = [
         "//patches:ygot/ygot.patch",
         "//patches:0001-ygot-declare-patched-value-dependency.patch",
+        "//patches:0003-ygot-preserve-union-enum-order.patch",
     ],
     path = "github.com/openconfig/ygot",
 )

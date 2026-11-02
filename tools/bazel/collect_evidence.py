@@ -25,8 +25,10 @@ def main():
     # check_incremental.py already retained the byte-verified production TARs.
     # bazel-bin may now name an optional test-model configuration, particularly
     # on a failed xfmr run, so never infer artifact provenance from that link.
-    for source in Path("bazel-testlogs").rglob("test.*"):
-        if source.name not in ("test.log", "test.xml") or not source.is_file():
+    logs = list(Path("bazel-testlogs").rglob("test.*"))
+    failed_bindings = list(Path("bazel-testlogs").glob("**/test.outputs/bindings-*.go"))
+    for source in logs + failed_bindings:
+        if (source not in failed_bindings and source.name not in ("test.log", "test.xml")) or not source.is_file():
             continue
         destination = root / "testlogs" / source.relative_to("bazel-testlogs")
         destination.parent.mkdir(parents=True, exist_ok=True)

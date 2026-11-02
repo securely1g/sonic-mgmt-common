@@ -43,7 +43,12 @@ jobs:
           source = source.replace(
               'https://raw.githubusercontent.com/securely1g/sonic-bazel-registry/main',
               'https://raw.githubusercontent.com/securely1g/sonic-bazel-registry/072b114baeced168815e350d496f512d98760562')
-          Path('/tmp/mgmt-ci.bazelrc').write_text(source)
+          # Reuse setup-bazel's caches while keeping distinct output bases
+          # for the owner and the separate consumer workspace.
+          cache_lines = [line for line in (Path.home() / '.bazelrc').read_text().splitlines()
+                         if line.startswith(('build --disk_cache=', 'common --repository_cache='))]
+          assert len(cache_lines) == 2, 'Expected the configured disk and repository caches'
+          Path('/tmp/mgmt-ci.bazelrc').write_text(source + '\n' + '\n'.join(cache_lines) + '\n')
           PY
           echo 'BAZEL_COMMAND=bazel --nosystem_rc --nohome_rc --noworkspace_rc --bazelrc=/tmp/mgmt-ci.bazelrc' >> "$GITHUB_ENV"
       - name: Build source libraries and verify schema invalidation
@@ -53,6 +58,7 @@ jobs:
         run: |
           test "$(uname -m)" = x86_64
           test "$(. /etc/os-release; echo "$VERSION_CODENAME")" = trixie
+          $BAZEL_COMMAND test //dist:bindings_repro_test
           python3 tools/bazel/check_incremental.py
       - name: Run source tests and installed TAR contracts
         id: source_tests

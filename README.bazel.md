@@ -104,8 +104,12 @@ with the immutable source registration. The consumer-root configuration is not
 an isolated second copy of the owner's Go dependency graph.
 
 The inherited patched YANG generator used map iteration for ordered child lists,
-identity inheritance, and cross-module augments. The additional goyang patch keeps
-YANG declaration order and makes the unordered traversals stable. The binding
-reproducibility test runs the actual generator in two independent processes and
+identity inheritance, cross-module augments, and union enum reflection candidates. The additional goyang patch keeps
+YANG declaration order and makes the unordered traversals stable. The ygot repair follows its stored union subtype indexes, preserving the declared hardware-before-software precedence. The binding
+reproducibility test runs the actual generator in 20 independent processes and
 compares all output bytes, so restoring an action-cache entry cannot mask a
 nondeterministic generator.
+
+Draft CI copies the setup action's disk and repository cache settings into its
+reviewed registry configuration. The owner and consumer keep separate output
+bases, so validating the consumer preserves the owner's retained test results.
