@@ -1,4 +1,5 @@
-load("@io_bazel_rules_go//go:def.bzl", "go_library", "go_test")
+load("@io_bazel_rules_go//go:def.bzl", "go_library")
+load("//tools/bazel:redis_test.bzl", "redis_go_test")
 
 go_library(
     name = "apis",
@@ -15,7 +16,7 @@ go_library(
     ],
 )
 
-go_test(
+redis_go_test(
     name = "apis_test",
     srcs = ["db_diff_test.go"],
     embed = [":apis"],
