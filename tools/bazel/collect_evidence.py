@@ -7,6 +7,7 @@ from pathlib import Path
 import platform
 import shutil
 import subprocess
+import xml.etree.ElementTree as ET
 
 
 def main():
@@ -33,6 +34,14 @@ def main():
         destination = root / "testlogs" / source.relative_to("bazel-testlogs")
         destination.parent.mkdir(parents=True, exist_ok=True)
         shutil.copy2(source, destination)
+    # These direct rules_go suites need verbose output for per-case XML.
+    # A successful process with an empty report is insufficient evidence.
+    if os.environ.get("CI_DEFAULT_TEST_RESULT") == "success":
+        for suite in ("ocbinds", "path", "platform"):
+            report = root / "testlogs/translib" / suite / (suite + "_test") / "test.xml"
+            cases = ET.parse(report).getroot().findall(".//testcase")
+            if not cases or any(case.find("failure") is not None or case.find("error") is not None for case in cases):
+                raise ValueError("Missing or failed Go test cases: " + str(report))
     def git(*args):
         return subprocess.check_output(["git", "-c", "safe.directory=*", *args], text=True).strip()
     identity = {

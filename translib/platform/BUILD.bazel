@@ -14,5 +14,6 @@ go_library(
 go_test(
     name = "platform_test",
     srcs = ["platform_test.go"],
+    args = ["-test.v"],
     embed = [":platform"],
 )

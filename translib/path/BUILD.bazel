@@ -27,6 +27,7 @@ go_test(
         "path_test.go",
         "path_validator_test.go",
     ],
+    args = ["-test.v"],
     embed = [":path"],
     deps = [
         "@com_github_openconfig_gnmi//proto/gnmi",

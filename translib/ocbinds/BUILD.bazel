@@ -34,6 +34,7 @@ go_test(
         "emitjson_sort_test.go",
         "emitjson_test.go",
     ],
+    args = ["-test.v"],
     data = glob(["testdata/**"]),
     embed = [":ocbinds"],
     deps = [
