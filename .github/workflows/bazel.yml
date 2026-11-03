@@ -33,12 +33,21 @@ jobs:
           repository-cache: true
           disk-cache: management-common-amd64
           cache-version: "8.5.1"
-      - name: Use the maintained registry and shared caches
+      - name: Select the reviewed shared owners and shared caches
+        env:
+          # Draft dependency: registry #214, stacked on #212. Restore main after publication.
+          SONIC_BAZEL_REGISTRY_REVISION: 8f271da1f5f31f0014777c37bb47180af4c0b247
         run: |
-          # Use the committed registry configuration for both source roots.
+          # Replace the SONiC endpoint once; both roots keep the same complete registry.
           python3 - <<'PY'
           from pathlib import Path
+          import os, re
           source = Path('.bazelrc').read_text()
+          revision = os.environ['SONIC_BAZEL_REGISTRY_REVISION']
+          assert re.fullmatch(r'[0-9a-f]{40}', revision)
+          main = 'common --registry=https://raw.githubusercontent.com/securely1g/sonic-bazel-registry/main'
+          assert source.count(main) == 1
+          source = source.replace(main, main.removesuffix('main') + revision)
           # Reuse setup-bazel's caches while keeping distinct output bases
           # for the owner and the separate consumer workspace.
           cache_lines = [line for line in (Path.home() / '.bazelrc').read_text().splitlines()
