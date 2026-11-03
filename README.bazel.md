@@ -20,9 +20,9 @@ owner targets and use the runtime TAR in their container composition.
 
 ## Build and test
 
-After the OpenConfig linter registration
-[registry PR #163](https://github.com/securely1g/sonic-bazel-registry/pull/163)
-lands, the maintained registry configured in `.bazelrc` supplies every module:
+The maintained registry configured in `.bazelrc` supplies every module,
+including the merged OpenConfig linter registration from
+[registry PR #163](https://github.com/securely1g/sonic-bazel-registry/pull/163):
 
 ```sh
 bazel build //cvl //translib //dist:runtime //dist:codegen
@@ -35,10 +35,9 @@ bazel test //cvl:cvl_test //translib:translib_test //translib/db:db_test \
 bazel test --config=xfmr //translib/transformer:transformer_model_test
 ```
 
-During review, CI uses a temporary copy of `.bazelrc` with its one SONiC registry
-endpoint replaced by reviewed commit `072b114baeced168815e350d496f512d98760562`.
-Normal committed defaults stay on `main`. This source PR remains Draft until
-the needed registration is published and temporary CI selection is removed.
+Local builds and CI use the same maintained `main` registry and BCR endpoints.
+CI copies the committed configuration together with its configured cache paths;
+it does not replace the registry with a review snapshot.
 
 `--config=xfmr` selects the existing transformer's `xfmrtest` Go tags and
 `INCLUDE_TEST_MODELS=y` schema inputs together. Default builds do not contain
@@ -110,6 +109,6 @@ reproducibility test runs the actual generator in 20 independent processes and
 compares all output bytes, so restoring an action-cache entry cannot mask a
 nondeterministic generator.
 
-Draft CI copies the setup action's disk and repository cache settings into its
-reviewed registry configuration. The owner and consumer keep separate output
+CI copies the setup action's disk and repository cache settings alongside the
+committed registry configuration. The owner and consumer keep separate output
 bases, so validating the consumer preserves the owner's retained test results.

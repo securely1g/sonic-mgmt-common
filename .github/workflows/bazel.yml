@@ -33,16 +33,12 @@ jobs:
           repository-cache: true
           disk-cache: management-common-amd64
           cache-version: "8.5.1"
-      - name: Select the reviewed OpenConfig linter candidate
+      - name: Use the maintained registry and shared caches
         run: |
-          # Temporary Draft validation for the oc-pyang registration. Replace
-          # the catalog once; never append a second endpoint for this registry.
+          # Use the committed registry configuration for both source roots.
           python3 - <<'PY'
           from pathlib import Path
           source = Path('.bazelrc').read_text()
-          source = source.replace(
-              'https://raw.githubusercontent.com/securely1g/sonic-bazel-registry/main',
-              'https://raw.githubusercontent.com/securely1g/sonic-bazel-registry/072b114baeced168815e350d496f512d98760562')
           # Reuse setup-bazel's caches while keeping distinct output bases
           # for the owner and the separate consumer workspace.
           cache_lines = [line for line in (Path.home() / '.bazelrc').read_text().splitlines()
