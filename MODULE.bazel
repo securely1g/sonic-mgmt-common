@@ -7,6 +7,7 @@ module(
     ],
 )
 
+bazel_dep(name = "bazel_lib", version = "3.2.2")
 bazel_dep(name = "bazel_skylib", version = "1.9.2")
 bazel_dep(name = "gazelle", version = "0.54.0.sonic.1")
 bazel_dep(name = "openconfig_goyang", version = "0.0.0.sonic.1-20200309174518-a00bece872fc", repo_name = "com_github_openconfig_goyang")
@@ -98,6 +99,10 @@ use_repo(pip, "mgmt_pip")
 test_apt = use_extension("//tools/test:apt.bzl", "apt")
 test_apt.import_lock(lock = "//tools/test:apt.lock.json")
 use_repo(test_apt, "mgmt_test_deps")
+
+# Normalizing Redis package archives uses zstd in the fixture repository mapping.
+package_tools = use_extension("@bazel_lib//lib:extensions.bzl", "toolchains")
+use_repo(package_tools, "zstd_toolchains")
 
 tar_toolchains = use_extension("@tar.bzl//tar:extensions.bzl", "toolchains")
 use_repo(tar_toolchains, "bsd_tar_toolchains")
