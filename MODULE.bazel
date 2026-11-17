@@ -94,9 +94,9 @@ use_repo(pip, "mgmt_pip")
 
 # Private test service, using the same immutable Debian snapshot as the shared
 # toolchain. Redis is a declared test runtime, never a worker-owned service.
-apt = use_extension("@rules_distroless//apt:extensions.bzl", "apt")
-apt.import_lock(lock = "//tools/test:apt.lock.json")
-use_repo(apt, "mgmt_test_deps")
+test_apt = use_extension("//tools/test:apt.bzl", "apt")
+test_apt.import_lock(lock = "//tools/test:apt.lock.json")
+use_repo(test_apt, "mgmt_test_deps")
 
 tar_toolchains = use_extension("@tar.bzl//tar:extensions.bzl", "toolchains")
 use_repo(tar_toolchains, "bsd_tar_toolchains")
